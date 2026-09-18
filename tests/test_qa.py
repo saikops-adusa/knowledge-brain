@@ -51,6 +51,19 @@ class QATests(unittest.TestCase):
         same_name_b = UploadedFileStub("slides.pdf", b"version-b")
         self.assertNotEqual(upload_signature([same_name_a]), upload_signature([same_name_b]))
 
+    def test_upload_signature_is_order_insensitive(self):
+        class UploadedFileStub:
+            def __init__(self, name, content):
+                self.name = name
+                self._content = content
+
+            def getvalue(self):
+                return self._content
+
+        file_a = UploadedFileStub("a.pdf", b"a")
+        file_b = UploadedFileStub("b.pdf", b"b")
+        self.assertEqual(upload_signature([file_a, file_b]), upload_signature([file_b, file_a]))
+
 
 if __name__ == "__main__":
     unittest.main()

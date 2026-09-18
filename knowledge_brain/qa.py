@@ -84,11 +84,11 @@ def chunks_from_uploaded_files(uploaded_files: Iterable) -> List[str]:
 def upload_signature(uploaded_files: Iterable) -> Tuple[Tuple[str, int, str], ...]:
     if not uploaded_files:
         return tuple()
-    return tuple(
+    return tuple(sorted(
         (getattr(file, "name", ""), len(file_content), sha256(file_content).hexdigest())
         for file in uploaded_files
         for file_content in [_uploaded_file_bytes(file)]
-    )
+    ))
 
 
 def _uploaded_file_bytes(file) -> bytes:
