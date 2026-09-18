@@ -1,4 +1,5 @@
 import streamlit as st
+from pypdf.errors import PdfReadError
 
 from knowledge_brain.qa import answer_question, chunks_from_uploaded_files, upload_signature
 
@@ -22,7 +23,7 @@ elif current_signature != previous_signature:
         st.session_state["chunks"] = chunks_from_uploaded_files(uploaded_files)
         st.session_state["upload_signature"] = current_signature
         st.success(f"Loaded {len(uploaded_files)} PDF(s).")
-    except Exception:
+    except (PdfReadError, OSError, ValueError):
         st.session_state["chunks"] = []
         st.session_state["upload_signature"] = tuple()
         st.error("Unable to read one or more uploaded PDFs. Please upload valid, non-corrupted files.")

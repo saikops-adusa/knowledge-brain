@@ -89,7 +89,7 @@ def answer_question(question: str, chunks: List[str]) -> str:
 def chunks_from_uploaded_files(uploaded_files: Iterable) -> List[str]:
     if not uploaded_files:
         return []
-    file_bytes = [content for _, content in _normalized_uploaded_files(uploaded_files)]
+    file_bytes = [content for _, content, _ in _normalized_uploaded_files(uploaded_files)]
     combined_text = extract_text_from_pdfs(file_bytes)
     return split_text(combined_text)
 
@@ -123,17 +123,14 @@ def _uploaded_file_bytes(file) -> bytes:
     return str(file).encode("utf-8")
 
 
-def _normalized_uploaded_files(uploaded_files: Iterable) -> List[Tuple[str, bytes]]:
-    normalized: List[Tuple[str, bytes]] = []
+def _normalized_uploaded_files(uploaded_files: Iterable) -> List[Tuple[str, bytes, str]]:
+    normalized: List[Tuple[str, bytes, str]] = []
     for file in uploaded_files:
         content = _uploaded_file_bytes(file)
-        normalized.append((getattr(file, "name", ""), content))
-    normalized.sort(key=lambda entry: (entry[0], len(entry[1]), entry[1]))
+        normalized.append((getattr(file, "name", ""), content, sha256(content).hexdigest()))
+    normalized.sort(key=lambda entry: (entry[0], len(entry[1]), entry[2]))
     return normalized
 
 
 def _normalized_uploads_with_hash(uploaded_files: Iterable) -> List[Tuple[str, bytes, str]]:
-    return [
-        (name, content, sha256(content).hexdigest())
-        for name, content in _normalized_uploaded_files(uploaded_files)
-    ]
+    return _normalized_uploaded_files(uploaded_files)
