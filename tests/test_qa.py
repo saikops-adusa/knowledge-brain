@@ -64,6 +64,22 @@ class QATests(unittest.TestCase):
         file_b = UploadedFileStub("b.pdf", b"b")
         self.assertEqual(upload_signature([file_a, file_b]), upload_signature([file_b, file_a]))
 
+    def test_upload_signature_keeps_duplicate_files(self):
+        class UploadedFileStub:
+            def __init__(self, name, content):
+                self.name = name
+                self._content = content
+
+            def getvalue(self):
+                return self._content
+
+        file_a = UploadedFileStub("a.pdf", b"a")
+        file_b = UploadedFileStub("b.pdf", b"b")
+        first = upload_signature([file_a, file_a, file_b])
+        second = upload_signature([file_b, file_a, file_a])
+        self.assertEqual(first, second)
+        self.assertEqual(len(first), 3)
+
 
 if __name__ == "__main__":
     unittest.main()

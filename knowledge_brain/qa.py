@@ -76,7 +76,7 @@ def answer_question(question: str, chunks: List[str]) -> str:
 def chunks_from_uploaded_files(uploaded_files: Iterable) -> List[str]:
     if not uploaded_files:
         return []
-    file_bytes = [_uploaded_file_bytes(file) for file in uploaded_files]
+    file_bytes = [content for _, content, _ in _normalized_uploaded_files(uploaded_files)]
     combined_text = extract_text_from_pdfs(file_bytes)
     return split_text(combined_text)
 
@@ -84,11 +84,10 @@ def chunks_from_uploaded_files(uploaded_files: Iterable) -> List[str]:
 def upload_signature(uploaded_files: Iterable) -> Tuple[Tuple[str, int, str], ...]:
     if not uploaded_files:
         return tuple()
-    return tuple(sorted(
-        (getattr(file, "name", ""), len(file_content), sha256(file_content).hexdigest())
-        for file in uploaded_files
-        for file_content in [_uploaded_file_bytes(file)]
-    ))
+    return tuple(
+        (name, len(content), content_hash)
+        for name, content, content_hash in _normalized_uploaded_files(uploaded_files)
+    )
 
 
 def _uploaded_file_bytes(file) -> bytes:
@@ -105,3 +104,12 @@ def _uploaded_file_bytes(file) -> bytes:
     if isinstance(file, (bytes, bytearray)):
         return bytes(file)
     return str(file).encode("utf-8")
+
+
+def _normalized_uploaded_files(uploaded_files: Iterable) -> List[Tuple[str, bytes, str]]:
+    normalized: List[Tuple[str, bytes, str]] = []
+    for file in uploaded_files:
+        content = _uploaded_file_bytes(file)
+        normalized.append((getattr(file, "name", ""), content, sha256(content).hexdigest()))
+    normalized.sort(key=lambda entry: (entry[0], len(entry[1]), entry[2]))
+    return normalized
