@@ -9,6 +9,15 @@ from knowledge_brain.qa import (
 )
 
 
+class UploadedFileStub:
+    def __init__(self, name, content):
+        self.name = name
+        self._content = content
+
+    def getvalue(self):
+        return self._content
+
+
 class QATests(unittest.TestCase):
     def test_split_text_returns_overlapping_chunks(self):
         text = " ".join(f"word{i}" for i in range(30))
@@ -28,6 +37,17 @@ class QATests(unittest.TestCase):
         answer = answer_question("Tell me about quantum teleportation", ["Budget summary and hiring plan"])
         self.assertIn("could not find", answer)
 
+    def test_answer_question_returns_joined_matches(self):
+        answer = answer_question(
+            "What are the enterprise growth priorities?",
+            [
+                "Enterprise growth priorities include account expansion.",
+                "Another enterprise growth focus is partner channels.",
+            ],
+        )
+        self.assertIn("\n\n", answer)
+        self.assertIn("Enterprise growth priorities", answer)
+
     def test_split_text_rejects_invalid_overlap(self):
         with self.assertRaises(ValueError):
             split_text("hello world", chunk_size=5, overlap=5)
@@ -39,40 +59,16 @@ class QATests(unittest.TestCase):
         self.assertEqual(upload_signature([]), ())
 
     def test_upload_signature_changes_when_content_changes(self):
-        class UploadedFileStub:
-            def __init__(self, name, content):
-                self.name = name
-                self._content = content
-
-            def getvalue(self):
-                return self._content
-
         same_name_a = UploadedFileStub("slides.pdf", b"version-a")
         same_name_b = UploadedFileStub("slides.pdf", b"version-b")
         self.assertNotEqual(upload_signature([same_name_a]), upload_signature([same_name_b]))
 
     def test_upload_signature_is_order_insensitive(self):
-        class UploadedFileStub:
-            def __init__(self, name, content):
-                self.name = name
-                self._content = content
-
-            def getvalue(self):
-                return self._content
-
         file_a = UploadedFileStub("a.pdf", b"a")
         file_b = UploadedFileStub("b.pdf", b"b")
         self.assertEqual(upload_signature([file_a, file_b]), upload_signature([file_b, file_a]))
 
     def test_upload_signature_keeps_duplicate_files(self):
-        class UploadedFileStub:
-            def __init__(self, name, content):
-                self.name = name
-                self._content = content
-
-            def getvalue(self):
-                return self._content
-
         file_a = UploadedFileStub("a.pdf", b"a")
         file_b = UploadedFileStub("b.pdf", b"b")
         first = upload_signature([file_a, file_a, file_b])
