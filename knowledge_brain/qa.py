@@ -108,11 +108,13 @@ def _uploaded_file_bytes(file) -> bytes:
         return file.getvalue()
     if hasattr(file, "read"):
         position = file.tell() if hasattr(file, "tell") else None
-        if hasattr(file, "seek"):
-            file.seek(0)
-        content = file.read()
-        if position is not None and hasattr(file, "seek"):
-            file.seek(position)
+        try:
+            if hasattr(file, "seek"):
+                file.seek(0)
+            content = file.read()
+        finally:
+            if position is not None and hasattr(file, "seek"):
+                file.seek(position)
         return content if isinstance(content, (bytes, bytearray)) else content.encode("utf-8")
     if isinstance(file, str):
         return file.encode("utf-8")
