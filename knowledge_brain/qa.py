@@ -13,16 +13,23 @@ TOKEN_PATTERN = re.compile(r"[a-zA-Z0-9']+")
 def extract_text_from_pdfs(files: Iterable) -> str:
     texts: List[str] = []
     for file in files:
+        original_position = None
         if isinstance(file, (bytes, bytearray)):
             stream = BytesIO(file)
         else:
             stream = file
+            if hasattr(stream, "tell"):
+                original_position = stream.tell()
             if hasattr(stream, "seek"):
                 stream.seek(0)
-        reader = PdfReader(stream)
-        for page in reader.pages:
-            page_text = page.extract_text() or ""
-            texts.append(page_text)
+        try:
+            reader = PdfReader(stream)
+            for page in reader.pages:
+                page_text = page.extract_text() or ""
+                texts.append(page_text)
+        finally:
+            if original_position is not None and hasattr(stream, "seek"):
+                stream.seek(original_position)
     return "\n".join(texts).strip()
 
 

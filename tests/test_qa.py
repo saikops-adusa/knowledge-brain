@@ -5,6 +5,7 @@ from knowledge_brain.qa import (
     answer_question,
     best_chunks,
     chunks_from_uploaded_files,
+    extract_text_from_pdfs,
     split_text,
     upload_signature,
 )
@@ -89,6 +90,17 @@ class QATests(unittest.TestCase):
         file_obj.seek(0)
         start_pointer_signature = upload_signature([file_obj])
         self.assertEqual(advanced_pointer_signature, start_pointer_signature)
+
+    def test_extract_text_restores_seekable_stream_position_on_error(self):
+        file_obj = BytesIO(b"not-a-pdf")
+        file_obj.name = "broken.pdf"
+        file_obj.read(3)
+        current_position = file_obj.tell()
+
+        with self.assertRaises(Exception):
+            extract_text_from_pdfs([file_obj])
+
+        self.assertEqual(file_obj.tell(), current_position)
 
 
 if __name__ == "__main__":
