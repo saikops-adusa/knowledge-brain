@@ -1,6 +1,12 @@
 import unittest
 
-from knowledge_brain.qa import answer_question, best_chunks, refresh_chunks, split_text
+from knowledge_brain.qa import (
+    answer_question,
+    best_chunks,
+    chunks_from_uploaded_files,
+    split_text,
+    upload_signature,
+)
 
 
 class QATests(unittest.TestCase):
@@ -26,11 +32,11 @@ class QATests(unittest.TestCase):
         with self.assertRaises(ValueError):
             split_text("hello world", chunk_size=5, overlap=5)
 
-    def test_refresh_chunks_clears_state_when_uploads_removed(self):
-        state = {"chunks": ["stale content"]}
-        result = refresh_chunks([], state)
-        self.assertEqual(result, [])
-        self.assertEqual(state["chunks"], [])
+    def test_chunks_from_uploaded_files_returns_empty_without_uploads(self):
+        self.assertEqual(chunks_from_uploaded_files([]), [])
+
+    def test_upload_signature_is_empty_without_uploads(self):
+        self.assertEqual(upload_signature([]), ())
 
 
 if __name__ == "__main__":

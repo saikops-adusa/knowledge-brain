@@ -1,7 +1,7 @@
 import math
 import re
 from collections import Counter
-from typing import Iterable, List, MutableMapping
+from typing import Iterable, List, Tuple
 
 from pypdf import PdfReader
 
@@ -71,11 +71,17 @@ def answer_question(question: str, chunks: List[str]) -> str:
     return "\n\n".join(matches)
 
 
-def refresh_chunks(uploaded_files: Iterable, state: MutableMapping[str, List[str]]) -> List[str]:
-    if uploaded_files:
-        combined_text = extract_text_from_pdfs(uploaded_files)
-        chunks = split_text(combined_text)
-        state["chunks"] = chunks
-        return chunks
-    state["chunks"] = []
-    return []
+def chunks_from_uploaded_files(uploaded_files: Iterable) -> List[str]:
+    if not uploaded_files:
+        return []
+    combined_text = extract_text_from_pdfs(uploaded_files)
+    return split_text(combined_text)
+
+
+def upload_signature(uploaded_files: Iterable) -> Tuple[Tuple[str, int], ...]:
+    if not uploaded_files:
+        return tuple()
+    return tuple(
+        (getattr(file, "name", ""), getattr(file, "size", 0))
+        for file in uploaded_files
+    )

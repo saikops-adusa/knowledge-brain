@@ -1,6 +1,6 @@
 import streamlit as st
 
-from knowledge_brain.qa import answer_question, refresh_chunks
+from knowledge_brain.qa import answer_question, chunks_from_uploaded_files, upload_signature
 
 st.set_page_config(page_title="Knowledge Brain", page_icon="🧠")
 st.title("🧠 Knowledge Brain")
@@ -12,8 +12,14 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True,
 )
 
-chunks = refresh_chunks(uploaded_files, st.session_state)
-if uploaded_files:
+current_signature = upload_signature(uploaded_files)
+previous_signature = st.session_state.get("upload_signature")
+if not uploaded_files:
+    st.session_state["chunks"] = []
+    st.session_state["upload_signature"] = tuple()
+elif current_signature != previous_signature:
+    st.session_state["chunks"] = chunks_from_uploaded_files(uploaded_files)
+    st.session_state["upload_signature"] = current_signature
     st.success(f"Loaded {len(uploaded_files)} PDF(s).")
 
 question = st.text_input("Ask a question about your presentations")
