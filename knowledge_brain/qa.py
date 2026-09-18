@@ -1,5 +1,7 @@
 import math
 import re
+from hashlib import sha256
+from io import BytesIO
 from collections import Counter
 from typing import Iterable, List, Tuple
 
@@ -11,7 +13,7 @@ TOKEN_PATTERN = re.compile(r"[a-zA-Z0-9']+")
 def extract_text_from_pdfs(files: Iterable) -> str:
     texts: List[str] = []
     for file in files:
-        reader = PdfReader(file)
+        reader = PdfReader(BytesIO(file) if isinstance(file, (bytes, bytearray)) else file)
         for page in reader.pages:
             page_text = page.extract_text() or ""
             texts.append(page_text)
@@ -74,14 +76,32 @@ def answer_question(question: str, chunks: List[str]) -> str:
 def chunks_from_uploaded_files(uploaded_files: Iterable) -> List[str]:
     if not uploaded_files:
         return []
-    combined_text = extract_text_from_pdfs(uploaded_files)
+    file_bytes = [_uploaded_file_bytes(file) for file in uploaded_files]
+    combined_text = extract_text_from_pdfs(file_bytes)
     return split_text(combined_text)
 
 
-def upload_signature(uploaded_files: Iterable) -> Tuple[Tuple[str, int], ...]:
+def upload_signature(uploaded_files: Iterable) -> Tuple[Tuple[str, int, str], ...]:
     if not uploaded_files:
         return tuple()
     return tuple(
-        (getattr(file, "name", ""), getattr(file, "size", 0))
+        (getattr(file, "name", ""), len(file_content), sha256(file_content).hexdigest())
         for file in uploaded_files
+        for file_content in [_uploaded_file_bytes(file)]
     )
+
+
+def _uploaded_file_bytes(file) -> bytes:
+    if hasattr(file, "getvalue"):
+        return file.getvalue()
+    if hasattr(file, "read"):
+        position = file.tell() if hasattr(file, "tell") else None
+        content = file.read()
+        if position is not None and hasattr(file, "seek"):
+            file.seek(position)
+        return content if isinstance(content, (bytes, bytearray)) else content.encode("utf-8")
+    if isinstance(file, str):
+        return file.encode("utf-8")
+    if isinstance(file, (bytes, bytearray)):
+        return bytes(file)
+    return str(file).encode("utf-8")

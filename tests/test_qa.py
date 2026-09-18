@@ -38,6 +38,19 @@ class QATests(unittest.TestCase):
     def test_upload_signature_is_empty_without_uploads(self):
         self.assertEqual(upload_signature([]), ())
 
+    def test_upload_signature_changes_when_content_changes(self):
+        class UploadedFileStub:
+            def __init__(self, name, content):
+                self.name = name
+                self._content = content
+
+            def getvalue(self):
+                return self._content
+
+        same_name_a = UploadedFileStub("slides.pdf", b"version-a")
+        same_name_b = UploadedFileStub("slides.pdf", b"version-b")
+        self.assertNotEqual(upload_signature([same_name_a]), upload_signature([same_name_b]))
+
 
 if __name__ == "__main__":
     unittest.main()
