@@ -2,6 +2,7 @@ import unittest
 from io import BytesIO
 from unittest.mock import patch
 from types import SimpleNamespace
+from pypdf.errors import PdfReadError
 
 from knowledge_brain.qa import (
     answer_question,
@@ -99,7 +100,7 @@ class QATests(unittest.TestCase):
         file_obj.read(3)
         current_position = file_obj.tell()
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(PdfReadError):
             extract_text_from_pdfs([file_obj])
 
         self.assertEqual(file_obj.tell(), current_position)

@@ -25,7 +25,7 @@ elif current_signature != previous_signature:
         st.success(f"Loaded {len(uploaded_files)} PDF(s).")
     except (PdfReadError, OSError, ValueError):
         st.session_state["chunks"] = []
-        st.session_state["upload_signature"] = tuple()
+        st.session_state["upload_signature"] = current_signature
         st.error("Unable to read one or more uploaded PDFs. Please upload valid, non-corrupted files.")
 
 question = st.text_input("Ask a question about your presentations")
