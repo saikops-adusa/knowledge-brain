@@ -1,5 +1,7 @@
 import unittest
 from io import BytesIO
+from unittest.mock import patch
+from types import SimpleNamespace
 
 from knowledge_brain.qa import (
     answer_question,
@@ -99,6 +101,18 @@ class QATests(unittest.TestCase):
 
         with self.assertRaises(Exception):
             extract_text_from_pdfs([file_obj])
+
+        self.assertEqual(file_obj.tell(), current_position)
+
+    def test_extract_text_restores_seekable_stream_position_on_success(self):
+        file_obj = BytesIO(b"fake-pdf-bytes")
+        file_obj.name = "ok.pdf"
+        file_obj.read(4)
+        current_position = file_obj.tell()
+
+        fake_reader = SimpleNamespace(pages=[SimpleNamespace(extract_text=lambda: "hello")])
+        with patch("knowledge_brain.qa.PdfReader", return_value=fake_reader):
+            self.assertEqual(extract_text_from_pdfs([file_obj]), "hello")
 
         self.assertEqual(file_obj.tell(), current_position)
 
