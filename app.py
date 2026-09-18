@@ -1,6 +1,6 @@
 import streamlit as st
 
-from knowledge_brain.qa import answer_question, extract_text_from_pdfs, split_text
+from knowledge_brain.qa import answer_question, refresh_chunks
 
 st.set_page_config(page_title="Knowledge Brain", page_icon="🧠")
 st.title("🧠 Knowledge Brain")
@@ -12,10 +12,8 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True,
 )
 
+chunks = refresh_chunks(uploaded_files, st.session_state)
 if uploaded_files:
-    combined_text = extract_text_from_pdfs(uploaded_files)
-    chunks = split_text(combined_text)
-    st.session_state["chunks"] = chunks
     st.success(f"Loaded {len(uploaded_files)} PDF(s).")
 
 question = st.text_input("Ask a question about your presentations")

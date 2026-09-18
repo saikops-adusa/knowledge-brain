@@ -1,6 +1,6 @@
 import unittest
 
-from knowledge_brain.qa import answer_question, best_chunks, split_text
+from knowledge_brain.qa import answer_question, best_chunks, refresh_chunks, split_text
 
 
 class QATests(unittest.TestCase):
@@ -21,6 +21,16 @@ class QATests(unittest.TestCase):
     def test_answer_question_handles_missing_matches(self):
         answer = answer_question("Tell me about quantum teleportation", ["Budget summary and hiring plan"])
         self.assertIn("could not find", answer)
+
+    def test_split_text_rejects_invalid_overlap(self):
+        with self.assertRaises(ValueError):
+            split_text("hello world", chunk_size=5, overlap=5)
+
+    def test_refresh_chunks_clears_state_when_uploads_removed(self):
+        state = {"chunks": ["stale content"]}
+        result = refresh_chunks([], state)
+        self.assertEqual(result, [])
+        self.assertEqual(state["chunks"], [])
 
 
 if __name__ == "__main__":

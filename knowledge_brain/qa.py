@@ -1,7 +1,7 @@
 import math
 import re
 from collections import Counter
-from typing import Iterable, List
+from typing import Iterable, List, MutableMapping
 
 from pypdf import PdfReader
 
@@ -19,6 +19,10 @@ def extract_text_from_pdfs(files: Iterable) -> str:
 
 
 def split_text(text: str, chunk_size: int = 500, overlap: int = 80) -> List[str]:
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be greater than 0")
+    if overlap < 0 or overlap >= chunk_size:
+        raise ValueError("overlap must be between 0 and chunk_size - 1")
     if not text.strip():
         return []
     words = text.split()
@@ -65,3 +69,13 @@ def answer_question(question: str, chunks: List[str]) -> str:
     if not matches:
         return "I could not find a matching answer in the uploaded presentations. Try a more specific question."
     return "\n\n".join(matches)
+
+
+def refresh_chunks(uploaded_files: Iterable, state: MutableMapping[str, List[str]]) -> List[str]:
+    if uploaded_files:
+        combined_text = extract_text_from_pdfs(uploaded_files)
+        chunks = split_text(combined_text)
+        state["chunks"] = chunks
+        return chunks
+    state["chunks"] = []
+    return []
