@@ -1,4 +1,5 @@
 import unittest
+from io import BytesIO
 
 from knowledge_brain.qa import (
     answer_question,
@@ -75,6 +76,19 @@ class QATests(unittest.TestCase):
         second = upload_signature([file_b, file_a, file_a])
         self.assertEqual(first, second)
         self.assertEqual(len(first), 3)
+
+    def test_upload_signature_uses_full_seekable_content(self):
+        file_obj = BytesIO(b"abcdef")
+        file_obj.name = "slides.pdf"
+        file_obj.read(2)
+        current_position = file_obj.tell()
+
+        advanced_pointer_signature = upload_signature([file_obj])
+        self.assertEqual(file_obj.tell(), current_position)
+
+        file_obj.seek(0)
+        start_pointer_signature = upload_signature([file_obj])
+        self.assertEqual(advanced_pointer_signature, start_pointer_signature)
 
 
 if __name__ == "__main__":
